@@ -1,0 +1,59 @@
+public class PageRank{
+    public static void main(String[] args){
+        SparkConf conf=new SparkConf();
+        conf.setAppName("pagerank");
+        conf.setMaster("local");
+        conf.set("spark.testing.memory", "500000000");
+        JavaSparkContext sc=new JavaSparkContext(conf);
+        ArrayList<String> list=new ArrayList<String>(4);
+        list.add("A,D");
+        list.add("B,A");
+        list.add("C,A,B");
+        list.add("D,A,C");
+        JavaRDD<String> links=sc.parallelize(list);
+        JavaPairRDD<Character,char[]> pairs =links.mapToPair(new PairFunction<String, Character, char[]>() {
+            public Tuple2<Character,char[]> call(String s) {
+                String[] str=s.split(",");
+                char[] ch=new char[str.length];
+                for (int i=0;i<str.length;i++){
+                    ch[i]=str[i].charAt(0);
+                }
+                return new Tuple2<Character,char[]>(s.charAt(0),ch );
+            }
+        }).cache();
+        JavaPairRDD<Character,Float> ranks=sc.parallelize(Arrays.asList('A','B','C','D')).mapToPair(new PairFunction<Character, Character, Float>() {
+            public Tuple2<Character,Float> call(Character character) throws Exception {
+                return new Tuple2<Character,Float>(character,new Float(1.0));
+            }
+        });
+        for(int i=0;i<10;i++){
+            JavaPairRDD<Character,Tuple2<char[],Float>> contribs=pairs.join(ranks);
+            JavaPairRDD<Character,Float> con=contribs.flatMapToPair(new PairFlatMapFunction<Tuple2<Character,Tuple2<char[],Float>>,Character,Float>(){
+                public Iterator call(Tuple2<Character,Tuple2<char[],Float>> val) throws Exception{
+                    List<Tuple2<Character,Float>> list=new ArrayList<Tuple2<Character, Float>>();
+                    Float f=val._2._2;
+                    char[] ch=val._2._1();
+                    int len=ch.length;
+                    for(int i=0;i<len;i++) {
+                        Tuple2<Character, Float> map = new Tuple2<Character, Float>(new Character(ch[i]), new Float(f / len));
+                        list.add(map);
+                    }
+                    return list.iterator();
+                }
+            });
+            ranks=con.reduceByKey(new Function2<Float, Float, Float>() {
+                public Float call(Float a, Float b) { return a + b; }
+            }).mapValues(new Function<Float, Float>() {
+                public Float call(Float a) throws Exception {
+                    return new Float(0.15+0.85*a);
+                }
+            });
+        }
+        Map map=ranks.collectAsMap();
+        Set set=map.keySet();
+        Iterator it=set.iterator();
+        while(it.hasNext()){
+            System.out.println(map.get(it.next())  );
+        }
+    }
+}

@@ -1,0 +1,29 @@
+1. 本地编写wordcount程序 （参考实验教材第7章）
+
+提示：wordcount源码下载链接（源码需根据实际情况修改）
+
+https://hadoop.apache.org/docs/stable/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html#Source_Code
+
+2. 伪分布式和分布式运行MapReduce任务
+
+注意：
+
+(1) 集群的使用采用互斥锁的方式：先在QQ群中声明ON（加锁），再使用集群，使用完毕后声明OFF（释放锁）。
+
+(2) 请每位同学在集群的HDFS上创建一个 /user/<你的姓名>的目录作为自己的工作目录，在集群上运行程序时，各位同学需使用该目录作为输入/输出路径。
+
+(3) 集群VPN账号采用哈希方法分配：
+
+i = 座位号 % 10 + 1；
+
+if  i<10 
+
+     VPN用户名 = "dase"+"0"+i;
+
+else 
+
+     VPN用户名 = "dase"+i;
+
+VPN密码 = VPN用户名；
+
+例如：座位号为9、19的同学，VPN账号为dase10；座位号为10、20的同学，VPN账号为dase01
